@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.hospital.model.Medico;
+import com.example.hospital.dto.request.MedicoRequestDTO;
+import com.example.hospital.dto.response.MedicoResponseDTO;
 import com.example.hospital.service.MedicoService;
 
 @RestController
@@ -16,23 +17,23 @@ public class MedicoController {
     private MedicoService service;
 
     @GetMapping
-    public List<Medico> listarTodos() {
+    public List<MedicoResponseDTO> listarTodos() {
         return service.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public Medico buscarPorId(@PathVariable Long id) {
+    public MedicoResponseDTO buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
     }
 
     @PostMapping
-    public Medico salvar(@RequestBody Medico medico) {
-        return service.salvar(medico);
+    public MedicoResponseDTO salvar(@RequestBody MedicoRequestDTO dto) {
+        return service.salvar(dto);
     }
 
     @PutMapping("/{id}")
-    public Medico atualizar(@PathVariable Long id, @RequestBody Medico medico) {
-        return service.atualizar(id, medico);
+    public MedicoResponseDTO atualizar(@PathVariable Long id, @RequestBody MedicoRequestDTO dto) {
+        return service.atualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
