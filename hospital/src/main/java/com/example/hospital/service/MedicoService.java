@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.hospital.dto.request.MedicoRequestDTO;
 import com.example.hospital.dto.response.MedicoResponseDTO;
+import com.example.hospital.exception.ResourceNotFoundException;
 import com.example.hospital.mapper.MedicoMapper;
 import com.example.hospital.model.Medico;
 import com.example.hospital.repository.MedicoRepository;
@@ -26,7 +27,8 @@ public class MedicoService {
     }
 
     public MedicoResponseDTO buscarPorId(Long id) {
-        Medico medico = repository.findById(id).orElse(null);
+        Medico medico = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Médico não encontrado com id: " + id));
         return MedicoMapper.toResponseDTO(medico);
     }
 
@@ -37,16 +39,17 @@ public class MedicoService {
     }
 
     public MedicoResponseDTO atualizar(Long id, MedicoRequestDTO dto) {
-        Medico existente = repository.findById(id).orElse(null);
-        if (existente != null) {
-            MedicoMapper.updateEntity(existente, dto);
-            Medico atualizado = repository.save(existente);
-            return MedicoMapper.toResponseDTO(atualizado);
-        }
-        return null;
+        Medico existente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Médico não encontrado com id: " + id));
+        MedicoMapper.updateEntity(existente, dto);
+        Medico atualizado = repository.save(existente);
+        return MedicoMapper.toResponseDTO(atualizado);
     }
 
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Médico não encontrado com id: " + id);
+        }
         repository.deleteById(id);
     }
 }

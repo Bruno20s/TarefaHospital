@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.hospital.dto.request.ReceitaRequestDTO;
 import com.example.hospital.dto.response.ReceitaResponseDTO;
+import com.example.hospital.exception.ResourceNotFoundException;
 import com.example.hospital.mapper.ReceitaMapper;
 import com.example.hospital.model.Consulta;
 import com.example.hospital.model.Receita;
@@ -31,12 +32,14 @@ public class ReceitaService {
     }
 
     public ReceitaResponseDTO buscarPorId(Long id) {
-        Receita receita = repository.findById(id).orElse(null);
+        Receita receita = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receita não encontrada com id: " + id));
         return ReceitaMapper.toResponseDTO(receita);
     }
 
     public ReceitaResponseDTO salvar(ReceitaRequestDTO dto) {
-        Consulta consulta = consultaRepository.findById(dto.getConsultaId()).orElse(null);
+        Consulta consulta = consultaRepository.findById(dto.getConsultaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada com id: " + dto.getConsultaId()));
 
         Receita receita = ReceitaMapper.toEntity(dto, consulta);
         Receita salva = repository.save(receita);
@@ -44,18 +47,20 @@ public class ReceitaService {
     }
 
     public ReceitaResponseDTO atualizar(Long id, ReceitaRequestDTO dto) {
-        Receita existente = repository.findById(id).orElse(null);
-        if (existente != null) {
-            Consulta consulta = consultaRepository.findById(dto.getConsultaId()).orElse(null);
+        Receita existente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Receita não encontrada com id: " + id));
+        Consulta consulta = consultaRepository.findById(dto.getConsultaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada com id: " + dto.getConsultaId()));
 
-            ReceitaMapper.updateEntity(existente, dto, consulta);
-            Receita atualizada = repository.save(existente);
-            return ReceitaMapper.toResponseDTO(atualizada);
-        }
-        return null;
+        ReceitaMapper.updateEntity(existente, dto, consulta);
+        Receita atualizada = repository.save(existente);
+        return ReceitaMapper.toResponseDTO(atualizada);
     }
 
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Receita não encontrada com id: " + id);
+        }
         repository.deleteById(id);
     }
 }

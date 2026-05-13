@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.hospital.dto.request.ConvenioRequestDTO;
 import com.example.hospital.dto.response.ConvenioResponseDTO;
+import com.example.hospital.exception.ResourceNotFoundException;
 import com.example.hospital.mapper.ConvenioMapper;
 import com.example.hospital.model.Convenio;
 import com.example.hospital.repository.ConvenioRepository;
@@ -26,7 +27,8 @@ public class ConvenioService {
     }
 
     public ConvenioResponseDTO buscarPorId(Long id) {
-        Convenio convenio = repository.findById(id).orElse(null);
+        Convenio convenio = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Convênio não encontrado com id: " + id));
         return ConvenioMapper.toResponseDTO(convenio);
     }
 
@@ -37,16 +39,17 @@ public class ConvenioService {
     }
 
     public ConvenioResponseDTO atualizar(Long id, ConvenioRequestDTO dto) {
-        Convenio existente = repository.findById(id).orElse(null);
-        if (existente != null) {
-            ConvenioMapper.updateEntity(existente, dto);
-            Convenio atualizado = repository.save(existente);
-            return ConvenioMapper.toResponseDTO(atualizado);
-        }
-        return null;
+        Convenio existente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Convênio não encontrado com id: " + id));
+        ConvenioMapper.updateEntity(existente, dto);
+        Convenio atualizado = repository.save(existente);
+        return ConvenioMapper.toResponseDTO(atualizado);
     }
 
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Convênio não encontrado com id: " + id);
+        }
         repository.deleteById(id);
     }
 }

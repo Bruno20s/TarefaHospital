@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.hospital.dto.request.ConsultaRequestDTO;
 import com.example.hospital.dto.response.ConsultaResponseDTO;
+import com.example.hospital.exception.ResourceNotFoundException;
 import com.example.hospital.mapper.ConsultaMapper;
 import com.example.hospital.model.Consulta;
 import com.example.hospital.model.Medico;
@@ -36,13 +37,16 @@ public class ConsultaService {
     }
 
     public ConsultaResponseDTO buscarPorId(Long id) {
-        Consulta consulta = repository.findById(id).orElse(null);
+        Consulta consulta = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada com id: " + id));
         return ConsultaMapper.toResponseDTO(consulta);
     }
 
     public ConsultaResponseDTO salvar(ConsultaRequestDTO dto) {
-        Paciente paciente = pacienteRepository.findById(dto.getPacienteId()).orElse(null);
-        Medico medico = medicoRepository.findById(dto.getMedicoId()).orElse(null);
+        Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado com id: " + dto.getPacienteId()));
+        Medico medico = medicoRepository.findById(dto.getMedicoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Médico não encontrado com id: " + dto.getMedicoId()));
 
         Consulta consulta = ConsultaMapper.toEntity(dto, paciente, medico);
         Consulta salva = repository.save(consulta);
@@ -50,19 +54,22 @@ public class ConsultaService {
     }
 
     public ConsultaResponseDTO atualizar(Long id, ConsultaRequestDTO dto) {
-        Consulta existente = repository.findById(id).orElse(null);
-        if (existente != null) {
-            Paciente paciente = pacienteRepository.findById(dto.getPacienteId()).orElse(null);
-            Medico medico = medicoRepository.findById(dto.getMedicoId()).orElse(null);
+        Consulta existente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta não encontrada com id: " + id));
+        Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado com id: " + dto.getPacienteId()));
+        Medico medico = medicoRepository.findById(dto.getMedicoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Médico não encontrado com id: " + dto.getMedicoId()));
 
-            ConsultaMapper.updateEntity(existente, dto, paciente, medico);
-            Consulta atualizada = repository.save(existente);
-            return ConsultaMapper.toResponseDTO(atualizada);
-        }
-        return null;
+        ConsultaMapper.updateEntity(existente, dto, paciente, medico);
+        Consulta atualizada = repository.save(existente);
+        return ConsultaMapper.toResponseDTO(atualizada);
     }
 
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Consulta não encontrada com id: " + id);
+        }
         repository.deleteById(id);
     }
 }

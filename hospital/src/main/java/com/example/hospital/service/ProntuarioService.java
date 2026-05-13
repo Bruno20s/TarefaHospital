@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.hospital.dto.request.ProntuarioRequestDTO;
 import com.example.hospital.dto.response.ProntuarioResponseDTO;
+import com.example.hospital.exception.ResourceNotFoundException;
 import com.example.hospital.mapper.ProntuarioMapper;
 import com.example.hospital.model.Paciente;
 import com.example.hospital.model.Prontuario;
@@ -31,12 +32,14 @@ public class ProntuarioService {
     }
 
     public ProntuarioResponseDTO buscarPorId(Long id) {
-        Prontuario prontuario = repository.findById(id).orElse(null);
+        Prontuario prontuario = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Prontuário não encontrado com id: " + id));
         return ProntuarioMapper.toResponseDTO(prontuario);
     }
 
     public ProntuarioResponseDTO salvar(ProntuarioRequestDTO dto) {
-        Paciente paciente = pacienteRepository.findById(dto.getPacienteId()).orElse(null);
+        Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado com id: " + dto.getPacienteId()));
 
         Prontuario prontuario = ProntuarioMapper.toEntity(dto, paciente);
         Prontuario salvo = repository.save(prontuario);
@@ -44,18 +47,20 @@ public class ProntuarioService {
     }
 
     public ProntuarioResponseDTO atualizar(Long id, ProntuarioRequestDTO dto) {
-        Prontuario existente = repository.findById(id).orElse(null);
-        if (existente != null) {
-            Paciente paciente = pacienteRepository.findById(dto.getPacienteId()).orElse(null);
+        Prontuario existente = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Prontuário não encontrado com id: " + id));
+        Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado com id: " + dto.getPacienteId()));
 
-            ProntuarioMapper.updateEntity(existente, dto, paciente);
-            Prontuario atualizado = repository.save(existente);
-            return ProntuarioMapper.toResponseDTO(atualizado);
-        }
-        return null;
+        ProntuarioMapper.updateEntity(existente, dto, paciente);
+        Prontuario atualizado = repository.save(existente);
+        return ProntuarioMapper.toResponseDTO(atualizado);
     }
 
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Prontuário não encontrado com id: " + id);
+        }
         repository.deleteById(id);
     }
 }
